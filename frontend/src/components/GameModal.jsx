@@ -19,14 +19,11 @@ import { api } from '../services/api';
 import { sound } from '../services/soundService';
 
 export const GameModal = ({ game, user, wallet, platformConfig, onClose, onWalletUpdate }) => {
-  // Mode switcher: 'seamless' (Instant 0.1s Local Engine) | 'official' (Official Pragmatic Play Server)
-  const [viewMode, setViewMode] = useState(() => {
-    return localStorage.getItem('ck44_game_mode') || 'seamless';
-  });
+  // Always default to 'seamless' interactive engine so black screen never happens
+  const [viewMode, setViewMode] = useState('seamless');
 
   const handleSetMode = (mode) => {
     setViewMode(mode);
-    localStorage.setItem('ck44_game_mode', mode);
   };
 
   // Iframe states
@@ -698,46 +695,93 @@ export const GameModal = ({ game, user, wallet, platformConfig, onClose, onWalle
               </button>
             </div>
 
-            <div style={{ position: 'relative', flex: 1, width: '100%' }}>
-              {iframeLoading && (
-                <div
+            <div
+              style={{
+                position: 'relative',
+                flex: 1,
+                width: '100%',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                padding: '40px 20px',
+                background: 'radial-gradient(circle at center, #1e133d 0%, #0a081e 80%)',
+                textAlign: 'center',
+              }}
+            >
+              <div
+                style={{
+                  width: 90,
+                  height: 90,
+                  borderRadius: 24,
+                  background: 'linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: 48,
+                  boxShadow: '0 0 35px rgba(236, 72, 153, 0.6)',
+                  marginBottom: 16,
+                }}
+              >
+                {getGameIcon()}
+              </div>
+
+              <h2 style={{ fontSize: 22, fontWeight: 900, color: '#fff', marginBottom: 6 }}>
+                {game?.name || 'Aviator Plane'}
+              </h2>
+
+              <p style={{ fontSize: 13, color: '#a78bfa', maxWidth: 440, lineHeight: 1.5, marginBottom: 20 }}>
+                {game?.provider || 'Pragmatic Play'} এর অফিশিয়াল ৩D গেমিং সার্ভার। ব্রাউজার সিকিউরিটির (CORS / X-Frame-Options) কোনো বাধা ছাড়াই ফুলস্ক্রিনে খেলতে নিচের বাটনে ক্লিক করুন।
+              </p>
+
+              <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', justifyContent: 'center' }}>
+                <button
+                  onClick={() => window.open(officialIframeUrl, '_blank')}
                   style={{
-                    position: 'absolute',
-                    inset: 0,
-                    background: '#0a081e',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: 12,
+                    background: 'linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%)',
                     color: '#fff',
-                    zIndex: 10,
+                    border: 'none',
+                    borderRadius: 12,
+                    padding: '13px 28px',
+                    fontSize: 14,
+                    fontWeight: 900,
+                    cursor: 'pointer',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 8,
+                    boxShadow: '0 0 25px rgba(236, 72, 153, 0.6)',
+                    transition: 'transform 0.2s',
                   }}
                 >
-                  <div style={{ fontSize: 42 }}>{getGameIcon()}</div>
-                  <div style={{ fontSize: 16, fontWeight: 800, color: '#c084fc' }}>
-                    {game?.provider || 'Pragmatic Play'} অফিসিয়াল সার্ভার থেকে {game?.name} লোড হচ্ছে...
-                  </div>
-                  <div style={{ fontSize: 11, color: '#94a3b8' }}>
-                    লাইভ ৩D গ্রাফিক্স ও সাউন্ড কানেক্ট হচ্ছে...
-                  </div>
-                </div>
-              )}
+                  <ExternalLink size={18} />
+                  <span>🚀 নতুন উইন্ডোতে অফিসিয়াল ডেমো খেলুন</span>
+                </button>
 
-              <iframe
-                key={`${game?.code}-${iframeKey}`}
-                src={officialIframeUrl}
-                title={game?.name || 'Official Game'}
-                onLoad={() => setIframeLoading(false)}
-                loading="eager"
-                style={{
-                  width: '100%',
-                  height: '100%',
-                  border: 'none',
-                }}
-                allow="autoplay; fullscreen; encrypted-media; screen-wake-lock"
-                allowFullScreen
-              />
+                <button
+                  onClick={() => handleSetMode('seamless')}
+                  style={{
+                    background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                    color: '#fff',
+                    border: 'none',
+                    borderRadius: 12,
+                    padding: '13px 24px',
+                    fontSize: 14,
+                    fontWeight: 800,
+                    cursor: 'pointer',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 8,
+                    boxShadow: '0 0 20px rgba(16, 185, 129, 0.4)',
+                  }}
+                >
+                  <Zap size={18} />
+                  <span>⚡ এখানেই ইনস্ট্যান্ট খেলুন (০ সেকেন্ড)</span>
+                </button>
+              </div>
+
+              <div style={{ marginTop: 22, fontSize: 11, color: '#64748b' }}>
+                🔒 B2B Seamless Wallet v2.4 • 100% Provably Fair Game Engine
+              </div>
             </div>
           </div>
         )}
