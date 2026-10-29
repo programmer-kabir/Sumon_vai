@@ -1,4 +1,5 @@
 import express from 'express';
+import { protect, adminOnly } from '../middleware/auth.js';
 import {
   getAdminStats,
   getGameAnalytics,
@@ -18,18 +19,31 @@ import {
   updatePlayerStatus,
   updatePlayerRole,
 } from '../controllers/adminController.js';
+import {
+  getAdminReports,
+  getPlayerDossier,
+  updatePlayerLimits,
+} from '../controllers/adminReports.js';
 
 const router = express.Router();
 
+// 🔒 STRICT SECURITY GUARD: ALL ADMIN ROUTES REQUIRE AUTH & ADMIN ROLE
+router.use(protect, adminOnly);
+
 // Stats & Platform Goals
 router.get('/stats', getAdminStats);
+
+// Comprehensive Financial & Daily/Monthly Reports
+router.get('/reports', getAdminReports);
 
 // Game Profit / Loss & RTP Analytics
 router.get('/games-analytics', getGameAnalytics);
 router.get('/game-transactions', getRecentGameTransactions);
 
-// Player Management
+// Player Management & Individual Dossier
 router.get('/players', getPlayersList);
+router.get('/players/:id/dossier', getPlayerDossier);
+router.put('/players/:id/limits', updatePlayerLimits);
 router.put('/players/:id/balance', adjustPlayerBalance);
 router.put('/players/:id/status', updatePlayerStatus);
 router.put('/players/:id/role', updatePlayerRole);

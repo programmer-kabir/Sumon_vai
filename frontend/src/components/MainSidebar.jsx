@@ -24,13 +24,10 @@ export const MainSidebar = ({
   onOpenDeposit,
   onOpenWithdraw,
   onLogout,
-  onOpenAdmin,
   onSelectCategory,
   onOpenLuckyWheel,
 }) => {
   if (!isOpen) return null;
-
-  const isAdmin = user && (user.role === 'admin' || user.username === 'kabir@gmail.com');
 
   return (
     <div style={{
@@ -98,7 +95,6 @@ export const MainSidebar = ({
                   fontSize: 9,
                   fontWeight: 700,
                   padding: '2px 5px',
-                  borderRadius: 4,
                 }}>PORTAL</span>
               </div>
               <div style={{ fontSize: 10, color: 'var(--text-muted)' }}>নেভিগেশন ও কন্ট্রোল সাইডবার</div>
@@ -139,31 +135,21 @@ export const MainSidebar = ({
                     width: 32,
                     height: 32,
                     borderRadius: '50%',
-                    background: isAdmin ? 'linear-gradient(135deg, #ef4444 0%, #b91c1c 100%)' : '#047857',
+                    background: '#047857',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
                     fontWeight: 800,
                     fontSize: 13,
                   }}>
-                    {isAdmin ? '👑' : user.username[0].toUpperCase()}
+                    {user.username[0].toUpperCase()}
                   </div>
                   <div>
-                    <div style={{ fontSize: 13, fontWeight: 700, color: '#fff', display: 'flex', alignItems: 'center', gap: 6 }}>
-                      <span>{user.username}</span>
-                      {isAdmin && (
-                        <span style={{
-                          background: '#ef4444',
-                          color: '#fff',
-                          fontSize: 9,
-                          fontWeight: 800,
-                          padding: '1px 5px',
-                          borderRadius: 4,
-                        }}>ADMIN</span>
-                      )}
+                    <div style={{ fontSize: 13, fontWeight: 700, color: '#fff' }}>
+                      {user.username}
                     </div>
                     <div style={{ fontSize: 10, color: '#94a3b8' }}>
-                      {isAdmin ? 'সুপার অ্যাডমিন অ্যাকাউন্ট' : `ভিআইপি লেভেল ${user.vipLevel || 1}`}
+                      {`ভিআইপি লেভেল ${user.vipLevel || 1}`}
                     </div>
                   </div>
                 </div>
@@ -232,106 +218,7 @@ export const MainSidebar = ({
           )}
         </div>
 
-        {/* PROMINENT ADMIN DASHBOARD BUTTON IN SIDEBAR */}
-        <div style={{ padding: '12px 18px 6px 18px' }}>
-          <button
-            onClick={() => {
-              onClose();
-              onOpenAdmin();
-            }}
-            style={{
-              width: '100%',
-              background: 'linear-gradient(135deg, rgba(239, 68, 68, 0.25) 0%, rgba(185, 28, 28, 0.4) 100%)',
-              border: '1px solid #ef4444',
-              borderRadius: 10,
-              padding: '12px 14px',
-              color: '#fff',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              boxShadow: '0 4px 15px rgba(239, 68, 68, 0.25)',
-              transition: 'var(--transition)',
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <div style={{
-                background: '#ef4444',
-                width: 32,
-                height: 32,
-                borderRadius: 8,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}>
-                <ShieldCheck size={18} color="#fff" />
-              </div>
-              <div style={{ textAlign: 'left' }}>
-                <div style={{ fontSize: 13, fontWeight: 800, color: '#fca5a5' }}>
-                  👑 অ্যাডমিন ড্যাশবোর্ড
-                </div>
-                <div style={{ fontSize: 10, color: '#fecaca' }}>
-                  {isAdmin ? 'kabir@gmail.com (Active)' : 'ফুল প্ল্যাটফর্ম কন্ট্রোল প্যানেল'}
-                </div>
-              </div>
-            </div>
-            <ChevronRight size={18} color="#f87171" />
-          </button>
-
-          {/* Daily Lucky Spin Button */}
-          <button
-            onClick={() => {
-              onClose();
-              if (onOpenLuckyWheel) onOpenLuckyWheel();
-            }}
-            style={{
-              width: '100%',
-              marginTop: 8,
-              background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.2) 0%, rgba(217, 119, 6, 0.35) 100%)',
-              border: '1px solid #f59e0b',
-              borderRadius: 10,
-              padding: '10px 14px',
-              color: '#fff',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              boxShadow: '0 4px 15px rgba(245, 158, 11, 0.2)',
-              transition: 'var(--transition)',
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <div style={{
-                background: '#f59e0b',
-                width: 32,
-                height: 32,
-                borderRadius: 8,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontSize: 16,
-              }}>
-                🎁
-              </div>
-              <div style={{ textAlign: 'left' }}>
-                <div style={{ fontSize: 13, fontWeight: 800, color: '#fef08a' }}>
-                  ডেইলি লাকি স্পিন
-                </div>
-                <div style={{ fontSize: 10, color: '#fed7aa' }}>
-                  প্রতিদিন নিশ্চিত ক্যাশ প্রাইজ
-                </div>
-              </div>
-            </div>
-            <span style={{
-              background: '#ef4444',
-              color: '#fff',
-              fontSize: 10,
-              fontWeight: 800,
-              padding: '2px 6px',
-              borderRadius: 6,
-            }}>FREE</span>
-          </button>
-        </div>
+        
 
         {/* Navigation Categories */}
         <div style={{ flex: 1, overflowY: 'auto', padding: '10px 14px' }}>
@@ -381,7 +268,6 @@ export const MainSidebar = ({
                   fontSize: 9,
                   fontWeight: 800,
                   padding: '2px 6px',
-                  borderRadius: 4,
                 }}>
                   {item.badge}
                 </span>

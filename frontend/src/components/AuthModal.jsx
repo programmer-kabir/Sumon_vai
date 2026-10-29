@@ -224,46 +224,6 @@ export const AuthModal = ({ initialMode = 'login', onClose, onSuccess }) => {
 
           {/* 1-Click Quick Buttons */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 10 }}>
-            {/* Quick Super Admin Login */}
-            <button
-              type="button"
-              onClick={async () => {
-                setUsername('kabir@gmail.com');
-                setPassword('123456');
-                setLoading(true);
-                setErrorMsg('');
-                try {
-                  const res = await api.login({ username: 'kabir@gmail.com', password: '123456' });
-                  if (res.data?.token) {
-                    setAuthToken(res.data.token);
-                    onSuccess(res.data);
-                    onClose();
-                  }
-                } catch (err) {
-                  setErrorMsg(err.message);
-                } finally {
-                  setLoading(false);
-                }
-              }}
-              disabled={loading}
-              style={{
-                background: 'rgba(239, 68, 68, 0.15)',
-                border: '1px solid rgba(239, 68, 68, 0.5)',
-                color: '#f87171',
-                borderRadius: 8,
-                padding: '9px',
-                fontSize: 13,
-                fontWeight: 700,
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: 6,
-              }}
-            >
-              <span>👑 ১-ক্লিকে সুপার অ্যাডমিন লগইন (kabir@gmail.com)</span>
-            </button>
-
             {/* Quick 1-Click Guest Signup Option */}
             <button
               type="button"

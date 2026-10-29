@@ -20,12 +20,10 @@ export const Header = ({
   onOpenDeposit,
   onOpenWithdraw,
   onLogout,
-  onOpenAdmin,
   onToggleSidebar,
   onOpenLuckyWheel,
 }) => {
   const [muted, setMuted] = useState(sound.isMuted());
-  const isAdmin = user && (user.role === 'admin' || user.username === 'kabir@gmail.com');
 
   const handleToggleSound = () => {
     const isNowMuted = sound.toggleMute();
@@ -230,8 +228,8 @@ export const Header = ({
                 display: 'flex',
                 alignItems: 'center',
                 gap: 6,
-                background: isAdmin ? 'rgba(239, 68, 68, 0.2)' : 'rgba(255,255,255,0.06)',
-                border: isAdmin ? '1px solid rgba(239, 68, 68, 0.4)' : '1px solid rgba(255, 255, 255, 0.08)',
+                background: 'rgba(255,255,255,0.06)',
+                border: '1px solid rgba(255, 255, 255, 0.08)',
                 padding: '5px 10px',
                 borderRadius: 20,
               }}>
@@ -239,7 +237,7 @@ export const Header = ({
                   width: 26,
                   height: 26,
                   borderRadius: '50%',
-                  background: isAdmin ? '#ef4444' : '#047857',
+                  background: '#047857',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
@@ -247,12 +245,12 @@ export const Header = ({
                   fontWeight: 700,
                   color: '#fff',
                 }}>
-                  {isAdmin ? '👑' : user.username ? user.username[0].toUpperCase() : 'U'}
+                  {user.username ? user.username[0].toUpperCase() : 'U'}
                 </div>
                 <span style={{
                   fontSize: 12,
                   fontWeight: 700,
-                  color: isAdmin ? '#fca5a5' : '#fff',
+                  color: '#fff',
                   maxWidth: 90,
                   overflow: 'hidden',
                   textOverflow: 'ellipsis',
@@ -289,29 +287,7 @@ export const Header = ({
             </>
           )}
 
-          {/* Prominent Admin Direct Control Button */}
-          <button
-            onClick={onOpenAdmin}
-            title="সম্পূর্ণ অ্যাডমিন ড্যাশবোর্ড খুলুন"
-            style={{
-              background: 'linear-gradient(135deg, rgba(239, 68, 68, 0.25) 0%, rgba(185, 28, 28, 0.45) 100%)',
-              border: '1px solid #ef4444',
-              color: '#fecaca',
-              borderRadius: 8,
-              padding: '6px 12px',
-              fontSize: 12,
-              fontWeight: 800,
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: 6,
-              boxShadow: '0 0 12px rgba(239, 68, 68, 0.4)',
-              transition: 'var(--transition)',
-            }}
-          >
-            <ShieldCheck size={16} color="#fca5a5" />
-            <span>👑 অ্যাডমিন</span>
-          </button>
+          
 
           {/* Download App Mini Badge */}
           <button

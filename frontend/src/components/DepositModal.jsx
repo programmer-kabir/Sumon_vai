@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { X, Copy, CheckCircle, ShieldAlert, CreditCard } from 'lucide-react';
 import { api } from '../services/api';
 
@@ -10,7 +10,24 @@ const CHANNELS = [
 ];
 
 export const DepositModal = ({ onClose, onSuccess }) => {
+  const [channels, setChannels] = useState(CHANNELS);
   const [selectedChannel, setSelectedChannel] = useState(CHANNELS[0]);
+
+  useEffect(() => {
+    api.getPublicConfig().then((res) => {
+      if (res.data?.paymentSettings) {
+        const ps = res.data.paymentSettings;
+        const updated = [
+          { id: 'BKASH', name: 'বিকাশ (bKash)', agent: ps.bkash || '01712-345678', min: 200, bonus: 'ওয়েলকাম বোনাস' },
+          { id: 'NAGAD', name: 'নগদ (Nagad)', agent: ps.nagad || '01899-876543', min: 200, bonus: 'ক্যাশব্যাক অফার' },
+          { id: 'ROCKET', name: 'রকেট (Rocket)', agent: ps.rocket || '01911-223344', min: 200, bonus: 'দ্রুত প্রসেসিং' },
+          { id: 'USDT_TRC20', name: 'USDT (TRC20)', agent: ps.usdt || 'TYDzsxdczSu4mE9GfF1k4eBq8yL3K9wP3e', min: 1000, bonus: '+১.৫% এক্সট্রা বোনাস' },
+        ];
+        setChannels(updated);
+        setSelectedChannel(updated[0]);
+      }
+    }).catch(() => {});
+  }, []);
   const [amount, setAmount] = useState('500');
   const [trxId, setTrxId] = useState('');
   const [senderMobile, setSenderMobile] = useState('');
@@ -95,7 +112,7 @@ export const DepositModal = ({ onClose, onSuccess }) => {
             পেমেন্ট মেথড নির্বাচন করুন:
           </label>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 8, marginBottom: 14 }}>
-            {CHANNELS.map((ch) => {
+            {channels.map((ch) => {
               const isSelected = selectedChannel.id === ch.id;
               return (
                 <div

@@ -1,3 +1,9 @@
+import mongoose from 'mongoose';
+import { Wallet } from '../models/Wallet.js';
+import { GameTransaction } from '../models/GameTransaction.js';
+import { User } from '../models/User.js';
+import { demoStore, DEMO_USER_ID, isDemoUser } from '../config/demoStore.js';
+import { PlatformConfig } from '../models/PlatformConfig.js';
 import { v4 as uuidv4 } from 'uuid';
 
 // Flagship CK44 Curated Games Catalog (100% Verified Pragmatic Play HTML5 Demo & Seamless Compatible)
@@ -199,6 +205,239 @@ export const launchGame = async (req, res) => {
       },
     });
   } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+
+// @desc    Place a Live Seamless Casino Bet & Calculate Outcome
+// @route   POST /api/games/play-round
+export const playGameRound = async (req, res) => {
+  try {
+    const { gameCode, betAmount = 50, cashoutMultiplier = null } = req.body;
+    const amount = Math.max(1, Number(betAmount));
+
+    const game = GAME_CATALOG.find((g) => g.code === gameCode) || {
+      code: gameCode || 'pragmatic_highflyer',
+      name: 'Aviator',
+      provider: 'Pragmatic Play',
+      category: 'crash',
+    };
+
+    const isAuth = !!req.user && req.user._id && !isDemoUser(req.user._id);
+    const userId = isAuth ? req.user._id : DEMO_USER_ID;
+    const username = req.user?.username || demoStore.user.username || 'demo';
+
+    let wallet = null;
+    if (isAuth && mongoose.connection.readyState === 1) {
+      wallet = await Wallet.findOne({ userId });
+    }
+
+    const currentBalance = wallet ? wallet.realBalance : demoStore.wallet.realBalance;
+    if (currentBalance < amount) {
+      return res.status(400).json({
+        success: false,
+        message: 'অপর্যাপ্ত ব্যালেন্স! অনুগ্রহ করে ওয়ালেটে টাকা ডিপোজিট করুন।',
+        currentBalance,
+      });
+    }
+
+    // Read house RTP setting
+    let houseRtp = 'STANDARD';
+    try {
+      const cfg = await PlatformConfig.findOne({ key: 'GLOBAL_CONFIG' });
+      if (cfg && cfg.houseRtpMode) houseRtp = cfg.houseRtpMode;
+    } catch (e) {}
+
+    // Determine win probability based on God-Mode RTP
+    let winChance = 0.46; // standard ~96.5% RTP
+    let maxMul = 20.0;
+    if (houseRtp === 'HIGH_PROFIT') {
+      winChance = 0.35; // tighter edge
+      maxMul = 10.0;
+    } else if (houseRtp === 'PROMO_BOOST') {
+      winChance = 0.62; // promo acquisition
+      maxMul = 35.0;
+    }
+
+    // RNG Calculation
+    const rand = Math.random();
+    const isWin = rand < winChance;
+    let multiplier = 0;
+
+    if (isWin) {
+      if (game.category === 'crash') {
+        // Crash multiplier between 1.15x and maxMul
+        multiplier = Number((1.15 + Math.random() * (Math.random() > 0.8 ? maxMul : 3.5)).toFixed(2));
+        if (cashoutMultiplier && Number(cashoutMultiplier) > 1 && Number(cashoutMultiplier) <= multiplier) {
+          multiplier = Number(Number(cashoutMultiplier).toFixed(2));
+        }
+      } else {
+        // Slots & Table win multiplier
+        multiplier = Number((1.2 + Math.random() * (Math.random() > 0.85 ? maxMul : 4.0)).toFixed(2));
+      }
+    } else {
+      multiplier = 0;
+    }
+
+    const payout = isWin ? Number((amount * multiplier).toFixed(2)) : 0;
+    const netProfit = Number((payout - amount).toFixed(2));
+    const roundId = 'rnd_' + Date.now() + '_' + Math.floor(Math.random() * 1000);
+    const txIdDebit = 'tx_d_' + Date.now() + '_' + Math.floor(Math.random() * 1000);
+    const txIdCredit = 'tx_c_' + Date.now() + '_' + Math.floor(Math.random() * 1000);
+
+    let finalBalance = 0;
+    let finalWagering = 0;
+
+    // Apply to MongoDB or DemoStore
+    if (isAuth && wallet) {
+      // 1. Debit
+      const balBefore = wallet.realBalance;
+      wallet.realBalance = Number((wallet.realBalance - amount).toFixed(2));
+      wallet.wageringCurrent = Number(((wallet.wageringCurrent || 0) + amount).toFixed(2));
+
+      await GameTransaction.create({
+        txId: txIdDebit,
+        userId,
+        providerId: game.provider,
+        gameCode: game.code,
+        roundId,
+        type: 'DEBIT',
+        amount,
+        balanceBefore: balBefore,
+        balanceAfter: wallet.realBalance,
+        rawPayload: { gameName: game.name, username },
+      });
+
+      // 2. Credit if win
+      if (isWin && payout > 0) {
+        const balBeforeWin = wallet.realBalance;
+        wallet.realBalance = Number((wallet.realBalance + payout).toFixed(2));
+
+        await GameTransaction.create({
+          txId: txIdCredit,
+          userId,
+          providerId: game.provider,
+          gameCode: game.code,
+          roundId,
+          type: 'CREDIT',
+          amount: payout,
+          balanceBefore: balBeforeWin,
+          balanceAfter: wallet.realBalance,
+          rawPayload: { gameName: game.name, username, multiplier },
+        });
+      }
+
+      await wallet.save();
+      finalBalance = wallet.realBalance;
+      finalWagering = wallet.wageringCurrent;
+    } else {
+      // DemoStore
+      const balBefore = demoStore.wallet.realBalance;
+      demoStore.wallet.realBalance = Number((demoStore.wallet.realBalance - amount).toFixed(2));
+      demoStore.wallet.wageringCurrent = Number(((demoStore.wallet.wageringCurrent || 0) + amount).toFixed(2));
+
+      demoStore.transactions.unshift({
+        _id: txIdDebit,
+        txId: txIdDebit,
+        userId,
+        username,
+        providerId: game.provider,
+        gameCode: game.code,
+        gameName: game.name,
+        roundId,
+        type: 'DEBIT',
+        amount,
+        balanceBefore: balBefore,
+        balanceAfter: demoStore.wallet.realBalance,
+        createdAt: new Date().toISOString(),
+      });
+
+      let balBeforeWin = demoStore.wallet.realBalance;
+      if (isWin && payout > 0) {
+        balBeforeWin = demoStore.wallet.realBalance;
+        demoStore.wallet.realBalance = Number((demoStore.wallet.realBalance + payout).toFixed(2));
+
+        demoStore.transactions.unshift({
+          _id: txIdCredit,
+          txId: txIdCredit,
+          userId,
+          username,
+          providerId: game.provider,
+          gameCode: game.code,
+          gameName: game.name,
+          roundId,
+          type: 'CREDIT',
+          amount: payout,
+          balanceBefore: balBeforeWin,
+          balanceAfter: demoStore.wallet.realBalance,
+          createdAt: new Date().toISOString(),
+        });
+      }
+
+      // Sync to MongoDB so Admin console sees live bets immediately
+      if (mongoose.connection.readyState === 1) {
+        try {
+          const dbUser = await User.findOne({ username: 'demo' }) || await User.findOne({ role: 'player' }) || await User.findOne();
+          if (dbUser) {
+            await GameTransaction.create({
+              txId: txIdDebit,
+              userId: dbUser._id,
+              providerId: game.provider,
+              gameCode: game.code,
+              roundId,
+              type: 'DEBIT',
+              amount,
+              balanceBefore: balBefore,
+              balanceAfter: demoStore.wallet.realBalance,
+              rawPayload: { gameName: game.name, username },
+            });
+            if (isWin && payout > 0) {
+              await GameTransaction.create({
+                txId: txIdCredit,
+                userId: dbUser._id,
+                providerId: game.provider,
+                gameCode: game.code,
+                roundId,
+                type: 'CREDIT',
+                amount: payout,
+                balanceBefore: balBeforeWin,
+                balanceAfter: demoStore.wallet.realBalance,
+                rawPayload: { gameName: game.name, username, multiplier },
+              });
+            }
+          }
+        } catch (e) {
+          console.warn('GameTransaction MongoDB sync error:', e.message);
+        }
+      }
+
+      finalBalance = demoStore.wallet.realBalance;
+      finalWagering = demoStore.wallet.wageringCurrent;
+    }
+
+    res.json({
+      success: true,
+      data: {
+        gameCode: game.code,
+        gameName: game.name,
+        roundId,
+        betAmount: amount,
+        multiplier,
+        payout,
+        netProfit,
+        isWin,
+        wallet: {
+          realBalance: finalBalance,
+          wageringCurrent: finalWagering,
+        },
+        message: isWin
+          ? `🎉 অভিনন্দন! ${multiplier}x মাল্টিপ্লায়ারে জিতেছেন ৳ ${payout.toLocaleString()} BDT!`
+          : `ক্র্যাশ হয়ে গেছে! আবার চেষ্টা করুন।`,
+      },
+    });
+  } catch (error) {
+    console.error('playGameRound error:', error);
     res.status(500).json({ success: false, message: error.message });
   }
 };

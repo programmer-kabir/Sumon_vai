@@ -8,7 +8,6 @@ import { GameModal } from './components/GameModal';
 import { DepositModal } from './components/DepositModal';
 import { WithdrawModal } from './components/WithdrawModal';
 import { AuthModal } from './components/AuthModal';
-import { AdminModal } from './components/AdminModal';
 import { MainSidebar } from './components/MainSidebar';
 import { MegaJackpotBanner } from './components/MegaJackpotBanner';
 import { LiveWinnerToast } from './components/LiveWinnerToast';
@@ -32,7 +31,6 @@ export default function App() {
   const [authMode, setAuthMode] = useState('login');
   const [depositModalOpen, setDepositModalOpen] = useState(false);
   const [withdrawModalOpen, setWithdrawModalOpen] = useState(false);
-  const [adminModalOpen, setAdminModalOpen] = useState(false);
   const [luckyWheelOpen, setLuckyWheelOpen] = useState(false);
   const [activeGame, setActiveGame] = useState(null);
 
@@ -98,7 +96,6 @@ export default function App() {
     setUser(null);
     setWallet(null);
   };
-
   return (
     <div style={{ minHeight: '100vh', background: 'var(--bg-main)', color: '#fff' }}>
       {/* 1. Header */}
@@ -127,7 +124,6 @@ export default function App() {
           }
         }}
         onLogout={handleLogout}
-        onOpenAdmin={() => setAdminModalOpen(true)}
         onOpenLuckyWheel={() => setLuckyWheelOpen(true)}
       />
 
@@ -158,7 +154,6 @@ export default function App() {
           }
         }}
         onLogout={handleLogout}
-        onOpenAdmin={() => setAdminModalOpen(true)}
         onOpenLuckyWheel={() => setLuckyWheelOpen(true)}
         onSelectCategory={handleSelectCategory}
       />
@@ -323,13 +318,7 @@ export default function App() {
         }}
       />
 
-      {adminModalOpen && (
-        <AdminModal
-          onClose={() => setAdminModalOpen(false)}
-          onPlayerUpdate={fetchUserData}
-          onConfigUpdate={fetchPlatformConfig}
-        />
-      )}
+      
     </div>
   );
 }

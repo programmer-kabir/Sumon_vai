@@ -61,6 +61,26 @@ const userSchema = new mongoose.Schema(
       type: Number,
       default: 0,
     },
+    customTurnoverMultiplier: {
+      type: Number,
+      default: null,
+    },
+    customMaxDailyWithdrawal: {
+      type: Number,
+      default: null,
+    },
+    customMaxBet: {
+      type: Number,
+      default: null,
+    },
+    manualTurnoverGranted: {
+      type: Number,
+      default: 0,
+    },
+    turnoverWaived: {
+      type: Boolean,
+      default: false,
+    },
   },
   {
     timestamps: true,

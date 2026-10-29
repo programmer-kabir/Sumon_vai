@@ -68,3 +68,18 @@ export const optionalAuth = async (req, res, next) => {
   }
   next();
 };
+
+export const adminOnly = (req, res, next) => {
+  if (
+    req.user &&
+    (req.user.role === 'admin' ||
+      req.user.username === 'kabir@gmail.com' ||
+      req.user.email === 'kabir@gmail.com')
+  ) {
+    return next();
+  }
+  return res.status(403).json({
+    success: false,
+    message: 'অ্যাক্সেস ডিনাইড! এই সেকশনে প্রবেশের জন্য অ্যাডমিন পারমিশন প্রয়োজন।',
+  });
+};

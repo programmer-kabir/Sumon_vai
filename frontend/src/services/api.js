@@ -40,6 +40,7 @@ export const api = {
     return request(`/games?${query}`);
   },
   launchGame: (payload) => request('/games/launch', { method: 'POST', body: JSON.stringify(payload) }),
+  playGameRound: (payload) => request('/games/play-round', { method: 'POST', body: JSON.stringify(payload) }),
 
   // Payments
   deposit: (payload) => request('/wallet/deposit', { method: 'POST', body: JSON.stringify(payload) }),
@@ -51,25 +52,6 @@ export const api = {
   seamlessDebit: (payload) => request('/seamless/debit', { method: 'POST', body: JSON.stringify(payload) }),
   seamlessCredit: (payload) => request('/seamless/credit', { method: 'POST', body: JSON.stringify(payload) }),
   seamlessRollback: (payload) => request('/seamless/rollback', { method: 'POST', body: JSON.stringify(payload) }),
-
-  // Admin Direct Control & Full Management
-  getAdminStats: () => request('/admin/stats'),
-  getGameAnalytics: () => request('/admin/games-analytics'),
-  getGameTransactions: () => request('/admin/game-transactions'),
-  getAdminDeposits: () => request('/admin/deposits'),
-  getAdminWithdrawals: () => request('/admin/withdrawals'),
-  getPaymentSettings: () => request('/admin/payment-settings'),
-  updatePaymentSettings: (payload) => request('/admin/payment-settings', { method: 'PUT', body: JSON.stringify(payload) }),
-  getPlatformLimits: () => request('/admin/limits'),
-  updatePlatformLimits: (payload) => request('/admin/limits', { method: 'PUT', body: JSON.stringify(payload) }),
-  getPlayersList: () => request('/admin/players'),
-  adjustPlayerBalance: (id, payload) => request(`/admin/players/${id}/balance`, { method: 'PUT', body: JSON.stringify(payload) }),
-  updatePlayerStatus: (id, payload) => request(`/admin/players/${id}/status`, { method: 'PUT', body: JSON.stringify(payload) }),
-  updatePlayerRole: (id, payload) => request(`/admin/players/${id}/role`, { method: 'PUT', body: JSON.stringify(payload) }),
-  approveDeposit: (id) => request(`/admin/deposits/${id}/approve`, { method: 'PUT' }),
-  rejectDeposit: (id) => request(`/admin/deposits/${id}/reject`, { method: 'PUT' }),
-  payWithdrawal: (id) => request(`/admin/withdrawals/${id}/pay`, { method: 'PUT' }),
-  rejectWithdrawal: (id) => request(`/admin/withdrawals/${id}/reject`, { method: 'PUT' }),
 
   // Platform CMS, Banners, Notices & Live Winners
   getPublicConfig: () => request('/config/public'),

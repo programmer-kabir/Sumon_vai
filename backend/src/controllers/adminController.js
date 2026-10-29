@@ -104,6 +104,19 @@ export const getAdminStats = async (req, res) => {
 // @route   GET /api/admin/games-analytics
 export const getGameAnalytics = async (req, res) => {
   try {
+    const { period = 'all' } = req.query;
+    const now = new Date();
+    const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const startOfYesterday = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1);
+    const endOfYesterday = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, -1);
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+
+    let filterStart = null;
+    let filterEnd = null;
+    if (period === 'today') { filterStart = startOfToday; filterEnd = now; }
+    else if (period === 'yesterday') { filterStart = startOfYesterday; filterEnd = endOfYesterday; }
+    else if (period === 'this_month') { filterStart = startOfMonth; filterEnd = now; }
+
     const gameStatsMap = {};
 
     // 1. Initialize with all catalog games
@@ -161,17 +174,21 @@ export const getGameAnalytics = async (req, res) => {
     // 3. Aggregate from MongoDB GameTransaction if connected
     if (mongoose.connection.readyState === 1) {
       try {
-        const dbAgg = await GameTransaction.aggregate([
-          {
-            $group: {
-              _id: '$gameCode',
-              totalBets: { $sum: { $cond: [{ $eq: ['$type', 'DEBIT'] }, '$amount', 0] } },
-              totalPayouts: { $sum: { $cond: [{ $eq: ['$type', 'CREDIT'] }, '$amount', 0] } },
-              betCount: { $sum: { $cond: [{ $eq: ['$type', 'DEBIT'] }, 1, 0] } },
-              winCount: { $sum: { $cond: [{ $eq: ['$type', 'CREDIT'] }, 1, 0] } },
-            },
+                const matchGame = {};
+        if (filterStart && filterEnd) matchGame.createdAt = { $gte: filterStart, $lte: filterEnd };
+        else if (filterStart) matchGame.createdAt = { $gte: filterStart };
+        const pipeline = [];
+        if (Object.keys(matchGame).length > 0) pipeline.push({ $match: matchGame });
+        pipeline.push({
+          $group: {
+            _id: '$gameCode',
+            totalBets: { $sum: { $cond: [{ $eq: ['$type', 'DEBIT'] }, '$amount', 0] } },
+            totalPayouts: { $sum: { $cond: [{ $eq: ['$type', 'CREDIT'] }, '$amount', 0] } },
+            betCount: { $sum: { $cond: [{ $eq: ['$type', 'DEBIT'] }, 1, 0] } },
+            winCount: { $sum: { $cond: [{ $eq: ['$type', 'CREDIT'] }, 1, 0] } },
           },
-        ]);
+        });
+        const dbAgg = await GameTransaction.aggregate(pipeline);
 
         dbAgg.forEach((item) => {
           const code = item._id;
@@ -295,9 +312,18 @@ export const getPlayersList = async (req, res) => {
                   },
                 },
               ]);
-              const totalBets = txAgg.length > 0 ? txAgg[0].totalBets : 0;
+                            const totalBets = txAgg.length > 0 ? txAgg[0].totalBets : 0;
               const totalWins = txAgg.length > 0 ? txAgg[0].totalWins : 0;
               const netLoss = totalBets - totalWins; // House profit from this player
+
+              const isWaived = u.turnoverWaived === true || u.customTurnoverMultiplier === 0;
+              const turnoverMultiplier = u.customTurnoverMultiplier !== null && u.customTurnoverMultiplier !== undefined
+                ? u.customTurnoverMultiplier
+                : (platformSettings.turnoverMultiplier || 1.0);
+              const requiredTurnover = isWaived ? 0 : Number((userDeps * turnoverMultiplier).toFixed(2));
+              const completedTurnover = totalBets + (u.manualTurnoverGranted || 0);
+              const remainingTurnover = isWaived ? 0 : Math.max(0, Number((requiredTurnover - completedTurnover).toFixed(2)));
+              const canWithdraw = isWaived || completedTurnover >= requiredTurnover;
 
               return {
                 _id: u._id,
@@ -312,7 +338,12 @@ export const getPlayersList = async (req, res) => {
                 totalBets,
                 totalWins,
                 netLoss, // Player loss to casino (profit for platform)
-                wageringStatus: w && w.wageringCurrent >= w.wageringTarget ? 'COMPLETED' : 'IN_PROGRESS',
+                turnoverMultiplier,
+                requiredTurnover,
+                completedTurnover,
+                remainingTurnover,
+                canWithdraw,
+                wageringStatus: canWithdraw ? 'COMPLETED' : 'IN_PROGRESS',
                 status: u.status || 'ACTIVE',
                 createdAt: u.createdAt,
               };

@@ -1,7 +1,7 @@
 import mongoose from 'mongoose';
 import { PlatformConfig } from '../models/PlatformConfig.js';
 import { GameTransaction } from '../models/GameTransaction.js';
-import { demoStore } from '../config/demoStore.js';
+import { demoStore, paymentSettings } from '../config/demoStore.js';
 
 let memoryConfig = {
   marqueeAnnouncements: [
@@ -98,9 +98,12 @@ export const getPublicConfig = async (req, res) => {
       }
     }
 
+    const configObj = config && config.toObject ? config.toObject() : { ...(config || {}) };
+    configObj.paymentSettings = paymentSettings;
+
     res.json({
       success: true,
-      data: config,
+      data: configObj,
     });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
