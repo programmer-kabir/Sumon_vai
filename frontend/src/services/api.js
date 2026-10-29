@@ -1,4 +1,4 @@
-const API_BASE = import.meta.env.VITE_API_BASE || '/api';
+const API_BASE = import.meta.env.VITE_API_BASE || (import.meta.env.DEV ? '/api' : 'https://ck44-backend.onrender.com/api');
 
 export const getAuthToken = () => localStorage.getItem('ck44_token');
 export const setAuthToken = (token) => localStorage.setItem('ck44_token', token);
