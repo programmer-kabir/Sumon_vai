@@ -19,7 +19,7 @@ connectDB();
 
 // Middlewares
 app.use(cors({
-  origin: '*', // Allow all origins during dev
+  origin: true, // Allows all origins dynamically while supporting credentials
   credentials: true,
 }));
 app.use(express.json());
