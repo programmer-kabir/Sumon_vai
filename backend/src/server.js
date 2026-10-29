@@ -81,7 +81,11 @@ app.use((err, req, res, next) => {
   });
 });
 
-app.listen(PORT, () => {
-  console.log(`🚀 [CK44 Backend Server] Running on http://localhost:${PORT}`);
-  console.log(`📡 Seamless Wallet Webhooks: http://localhost:${PORT}/api/seamless`);
-});
+if (process.env.NODE_ENV !== 'production' || !process.env.VERCEL) {
+  app.listen(PORT, () => {
+    console.log(`🚀 [CK44 Backend Server] Running on http://localhost:${PORT}`);
+    console.log(`📡 Seamless Wallet Webhooks: http://localhost:${PORT}/api/seamless`);
+  });
+}
+
+export default app;
